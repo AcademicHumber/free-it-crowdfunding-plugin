@@ -43,7 +43,7 @@ function freeit_check_requirements()
 function freeit_missing_wc_notice()
 {
     $class = 'notice notice-error';
-    $message = __('Galactica requires WooCommerce to be installed.', 'p3k-galactica');
+    $message = __('Free It plugin requires WooCommerce to be installed.', 'free-it');
 
     printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html($message));
 }
@@ -54,6 +54,8 @@ add_action('after_setup_theme', 'freeit_check_requirements');
 function setup_plugin()
 {
     require_once plugin_dir_path(__FILE__) . 'free-it-rewards.php';
+    require_once plugin_dir_path(__FILE__) . 'auto-creator.php';
+    require_once plugin_dir_path(__FILE__) . 'order-management.php';
 }
 
 add_action('init', 'setup_plugin');

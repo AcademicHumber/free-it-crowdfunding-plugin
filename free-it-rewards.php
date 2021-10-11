@@ -28,9 +28,8 @@ if (!class_exists('WC_Product_reward')) {
 
         public function get_price($context = 'view')
         {
-            global $post;
-            $product = wc_get_product($post->ID);
-            $price = $product->get_meta('_freeit_rewards_pladge_amount');
+
+            $price = $this->get_meta('_freeit_rewards_pladge_amount');
             return $price;
         }
 
@@ -45,24 +44,24 @@ if (!class_exists('WC_Product_reward')) {
 
         public function get_image_id($context = 'view')
         {
-            global $post;
-            $product = wc_get_product($post->ID);
-            $image_id = $product->get_meta('_freeit_rewards_image_field');
+
+            $image_id = $this->get_meta('_freeit_rewards_image_field');
             return $image_id;
         }
     }
 }
 
 
-// add the product type to the dropdown
-function add_type_to_dropdown($types)
-{
-    $types['reward'] = __('Reward', 'free-it');
+// Hooks 
 
-    return $types;
-}
 add_filter('product_type_selector', 'add_type_to_dropdown');
+add_action('woocommerce_product_options_pricing', 'add_reward_fields');
+add_action('admin_footer', 'enable_product_js');
+add_action('woocommerce_process_product_meta_reward', 'save_reward_price');
+add_action('woocommerce_single_product_summary', 'add_cart_button', 15);
 
+
+// Functions
 
 // add the product type as a taxonomy
 function install_taxonomy()
@@ -74,25 +73,21 @@ function install_taxonomy()
 }
 register_activation_hook(__FILE__, 'install_taxonomy');
 
+// add the product type to the dropdown
+function add_type_to_dropdown($types)
+{
+    $types['reward'] = __('Reward', 'free-it');
+
+    return $types;
+}
 
 // Add reward fields
 function add_reward_fields()
 {
-    global $product_object;
 ?>
     <div class='options_group show_if_reward'>
         <?php
 
-        // woocommerce_wp_text_input(
-        //     array(
-        //         'id'          => '_pledge_amount',
-        //         'label'       => __('Pledge amount', 'free-it'),
-        //         'value'       => $product_object->get_meta('_pledge_amount', true),
-        //         'default'     => '',
-        //         'placeholder' => 'Enter the pledge aamount',
-        //         'data_type' => 'price',
-        //     )
-        // );
 
         $reward_meta_field = array(
             // Campaign ID
@@ -115,7 +110,8 @@ function add_reward_fields()
                 'placeholder'   => __('Pledge Amount', 'wp-crowdfunding'),
                 'value'         => '',
                 'class'         => 'wc_input_price',
-                'field_type'    => 'textfield'
+                'field_type'    => 'textfield',
+                'data_type'     => 'price'
             ),
             // Reward Image
             array(
@@ -193,8 +189,7 @@ function add_reward_fields()
 
         );
 
-        echo "<div class='reward_group'>";
-        echo "<div class='campaign_rewards_field_copy'>";
+        echo "<div class='free-it-reward_group'>";
         global $post;
         $product = wc_get_product($post->ID);
 
@@ -235,7 +230,6 @@ function add_reward_fields()
         }
 
         echo '</div>';
-        echo '</div>';
 
         ?>
     </div>
@@ -243,9 +237,7 @@ function add_reward_fields()
 <?php
 }
 
-add_action('woocommerce_product_options_pricing', 'add_reward_fields');
-
-// Generl Tab not showing up
+// General Tab not showing up
 add_action('woocommerce_product_options_general_product_data', function () {
     echo '<div class="options_group show_if_reward clear"></div>';
 });
@@ -278,7 +270,6 @@ function enable_product_js()
     </script>
 <?php
 }
-add_action('admin_footer', 'enable_product_js');
 
 // save data on submission
 function save_reward_price($post_id)
@@ -306,10 +297,6 @@ function save_reward_price($post_id)
         update_post_meta($post_id, '_freeit_rewards_item_limit', $item_limit);
     }
 }
-add_action('woocommerce_process_product_meta_reward', 'save_reward_price');
-
-
-
 
 // display add to cart button
 function add_cart_button()
@@ -320,11 +307,10 @@ function add_cart_button()
         echo '
         <form class="cart" action="" method="post" enctype="multipart/form-data">
             <div class="quantity">
-                <label class="screen-reader-text" for="quantity_5fe8134674b0d">Test quantity</label>
+                <label class="screen-reader-text" for="quantity_5fe8134674b0d">Quantity</label>
                 <input type="number" id="quantity_5fe8134674b0d" class="input-text qty text" step="1" min="1" max="" name="quantity" value="1" title="Qty" size="4" placeholder="" inputmode="numeric">
             </div>
             <button type="submit" name="add-to-cart" value="' . $id . '" class="single_add_to_cart_button button alt">Add to cart</button>
         </form>
     ';
 }
-add_action('woocommerce_single_product_summary', 'add_cart_button', 15);
