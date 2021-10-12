@@ -73,7 +73,7 @@ if (!function_exists('freeit_function')) {
 }
 
 if (!class_exists('FreeIt_CrowdFunding')) {
-    require_once FREE_IT_DIR_PATH . 'free-it-rewards.php';
+    require_once FREE_IT_DIR_PATH . 'includes/free-it-rewards.php';
     new \FREE_IT\FreeIt_CrowdFunding();
     require_once FREE_IT_DIR_PATH . 'auto-creator.php';
 }
