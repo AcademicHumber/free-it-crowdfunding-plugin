@@ -4,12 +4,13 @@
  * Extends the WpCrowdFunding functionalities
  *
  *
- * @package     Free-it
+ * @package     Free-It
  *
  */
 
-if (!defined('ABSPATH')) exit; // Exit if accessed directly
+namespace Free_It;
 
+if (!defined('ABSPATH')) exit; // Exit if accessed directly
 
 class FreeIt_CrowdFunding
 {
@@ -46,9 +47,11 @@ class FreeIt_CrowdFunding
         add_action('woocommerce_process_product_meta_reward', array($this, 'save_reward_price'));
         add_action('woocommerce_single_product_summary', array($this, 'add_cart_button'), 15);
 
+        // Manage rewards creation or update based on campaign's data
+        add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'manage_rewards_crud'));
 
         // Remove WPCrowdfunding default rewards tab on single product
-        $this->remove_filters_for_anonymous_class('wpcf_campaign_story_right_sidebar', 'WPCF\woocommerce\Template_Hooks', 'story_right_sidebar', 10);
+        add_action('init', array($this, 'remove_default_rewards_tab'));
     }
 
     // Functions
@@ -293,83 +296,106 @@ class FreeIt_CrowdFunding
     // display add to cart button
     public function add_cart_button()
     {
-        global $product;
-        $id = $product->get_id();
-        if (WC_Product_Factory::get_product_type($id) == 'reward')
-            echo '
-            <form class="cart" action="" method="post" enctype="multipart/form-data">
-                <div class="quantity">
-                    <label class="screen-reader-text" for="quantity_5fe8134674b0d">Quantity</label>
-                    <input type="number" id="quantity_5fe8134674b0d" class="input-text qty text" step="1" min="1" max="" name="quantity" value="1" title="Qty" size="4" placeholder="" inputmode="numeric">
-                </div>
-                <button type="submit" name="add-to-cart" value="' . $id . '" class="single_add_to_cart_button button alt">Add to cart</button>
-            </form>
-        ';
     }
 
     /**
-     * Allow to remove method for an hook when, it's a class method used and class don't have global for instanciation !
+     * Creates or updates rewards of the current crowdfunding product.
      * 
-     * @author Amaury Balmer - amaury@beapi.fr
      */
-    public function remove_filters_with_method_name($hook_name = '', $method_name = '', $priority = 0)
+    public function manage_rewards_crud($post_id)
     {
-        global $wp_filter;
 
-        // Take only filters on right hook name and priority
-        if (!isset($wp_filter[$hook_name][$priority]) || !is_array($wp_filter[$hook_name][$priority])) {
-            return false;
-        }
+        $reward_ids = freeit_functions()->check_post_rewards($post_id);
 
-        // Loop on filters registered
-        foreach ((array) $wp_filter[$hook_name][$priority] as $unique_id => $filter_array) {
-            // Test if filter is an array ! (always for class/method)
-            if (isset($filter_array['function']) && is_array($filter_array['function'])) {
-                // Test if object is a class and method is equal to param !
-                if (is_object($filter_array['function'][0]) && get_class($filter_array['function'][0]) && $filter_array['function'][1] == $method_name) {
-                    // Test for WordPress >= 4.7 WP_Hook class (https://make.wordpress.org/core/2016/09/08/wp_hook-next-generation-actions-and-filters/)
-                    if (is_a($wp_filter[$hook_name], 'WP_Hook')) {
-                        unset($wp_filter[$hook_name]->callbacks[$priority][$unique_id]);
-                    } else {
-                        unset($wp_filter[$hook_name][$priority][$unique_id]);
-                    }
+
+        // WP Crowdfunding handles rewards on a weird way
+        // If it is only 1 reward, it goes on the [0] index
+        // But if there are 2 or more rewards, the reward info starts at [1] index
+
+        for ($i = 0; $i < count($_POST['wpneo_rewards_pladge_amount']); $i++) {
+            // Check if campaign has rewards
+
+            if (!empty($_POST['wpneo_rewards_pladge_amount'][$i])) {
+
+                $reward_data = [
+                    'title'             => $_POST['post_title'] . ' campaign $' . $_POST['wpneo_rewards_pladge_amount'][$i] . ' reward',
+                    'campaign_id'       => $post_id,
+                    'pladge_amount'     => $_POST['wpneo_rewards_pladge_amount'][$i],
+                    'image'             => $_POST['wpneo_rewards_image_field'][$i],
+                    'description'       => $_POST['wpneo_rewards_description'][$i],
+                    'endmonth'          => $_POST['wpneo_rewards_endmonth'][$i],
+                    'endyear'           => $_POST['wpneo_rewards_endyear'][$i],
+                    'item_limit'        => $_POST['wpneo_rewards_item_limit'][$i],
+                ];
+
+
+                // If there are more than 1 reward, reduce the index (it should not enter on the first iteration)
+
+                $index = count($_POST['wpneo_rewards_pladge_amount']) > 1 ? ($i - 1) : $i;
+
+                if (!empty($reward_ids[$index])) {
+
+                    //Update post
+
+                    $reward_args = [
+                        'ID'       => $reward_ids[$index],
+                        'post_title'    => $reward_data['title'],
+                        'post_content'  => $reward_data['description'],
+                        'post_status'   => 'publish',
+                        'post_type'     => "product",
+                        'meta_input'    => [
+                            '_freeit_rewards_campaign_id'   => $reward_data['campaign_id'],
+                            '_freeit_rewards_pladge_amount' => $reward_data['pladge_amount'],
+                            '_freeit_rewards_image_field'   => $reward_data['image'],
+                            '_thumbnail_id'                 => $reward_data['image'],
+                            '_freeit_rewards_description'   => $reward_data['description'],
+                            '_freeit_rewards_endmonth'      => $reward_data['endmonth'],
+                            '_freeit_rewards_endyear'       => $reward_data['endyear'],
+                            '_freeit_rewards_item_limit'    => $reward_data['item_limit'],
+
+                        ]
+                    ];
+
+                    $reward_id = wp_update_post($reward_args);
+
+                    // echo "updated post: " . $reward_id;
+                } else {
+
+                    //Create new reward post
+
+                    $reward_args = [
+                        'post_title'    => $reward_data['title'],
+                        'post_content'  => $reward_data['description'],
+                        'post_status'   => 'publish',
+                        'post_type'     => "product",
+                        'meta_input'    => [
+                            '_freeit_rewards_campaign_id'   => $reward_data['campaign_id'],
+                            '_freeit_rewards_pladge_amount' => $reward_data['pladge_amount'],
+                            '_freeit_rewards_image_field'   => $reward_data['image'],
+                            '_thumbnail_id'                 => $reward_data['image'],
+                            '_freeit_rewards_description'   => $reward_data['description'],
+                            '_freeit_rewards_endmonth'      => $reward_data['endmonth'],
+                            '_freeit_rewards_endyear'       => $reward_data['endyear'],
+                            '_freeit_rewards_item_limit'    => $reward_data['item_limit'],
+
+                        ]
+                    ];
+
+
+
+                    $reward_id = wp_insert_post($reward_args);
+
+                    wp_set_object_terms($reward_id, 'reward', 'product_type');
+
+                    // echo "Created post: " . $reward_id;
                 }
             }
         }
-
-        return false;
     }
 
-    /**
-     * Allow to remove method for an hook when, it's a class method used and class don't have variable, but you know the class name :)
-     * 
-     * @author Amaury Balmer - amaury@beapi.fr
-     */
-    public function remove_filters_for_anonymous_class($hook_name = '', $class_name = '', $method_name = '', $priority = 0)
+
+    public function remove_default_rewards_tab()
     {
-        global $wp_filter;
-
-        // Take only filters on right hook name and priority
-        if (!isset($wp_filter[$hook_name][$priority]) || !is_array($wp_filter[$hook_name][$priority])) {
-            return false;
-        }
-
-        // Loop on filters registered
-        foreach ((array) $wp_filter[$hook_name][$priority] as $unique_id => $filter_array) {
-            // Test if filter is an array ! (always for class/method)
-            if (isset($filter_array['function']) && is_array($filter_array['function'])) {
-                // Test if object is a class, class and method is equal to param !
-                if (is_object($filter_array['function'][0]) && get_class($filter_array['function'][0]) && get_class($filter_array['function'][0]) == $class_name && $filter_array['function'][1] == $method_name) {
-                    // Test for WordPress >= 4.7 WP_Hook class (https://make.wordpress.org/core/2016/09/08/wp_hook-next-generation-actions-and-filters/)
-                    if (is_a($wp_filter[$hook_name], 'WP_Hook')) {
-                        unset($wp_filter[$hook_name]->callbacks[$priority][$unique_id]);
-                    } else {
-                        unset($wp_filter[$hook_name][$priority][$unique_id]);
-                    }
-                }
-            }
-        }
-
-        return false;
+        freeit_functions()->remove_filters_for_anonymous_class('wpcf_campaign_story_right_sidebar', 'WPCF\woocommerce\Template_Hooks', 'story_right_sidebar', 10);
     }
 }

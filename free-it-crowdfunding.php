@@ -41,7 +41,7 @@ define('FREE_IT_BASENAME', plugin_basename(FREE_IT_FILE));
  */
 function freeit_check_requirements()
 {
-    if (is_plugin_active('woocommerce/woocommerce.php')) {
+    if (is_plugin_active('woocommerce/woocommerce.php') && is_plugin_active('wp-crowdfunding/wp-crowdfunding.php')) {
         return true;
     } else {
         add_action('admin_notices', 'freeit_missing_wc_notice');
@@ -55,7 +55,7 @@ function freeit_check_requirements()
 function freeit_missing_wc_notice()
 {
     $class = 'notice notice-error';
-    $message = __('Free It plugin requires WooCommerce to be installed.', 'free-it');
+    $message = __('Free It plugin requires WooCommerce and WPCrowdfunding to be installed.', 'free-it');
 
     printf('<div class="%1$s"><p>%2$s</p></div>', esc_attr($class), esc_html($message));
 }
@@ -63,12 +63,25 @@ function freeit_missing_wc_notice()
 add_action('after_setup_theme', 'freeit_check_requirements');
 
 
-function setup_plugin()
-{
-    require_once FREE_IT_DIR_PATH . 'free-it-rewards.php';
-    new FreeIt_CrowdFunding();
-    require_once FREE_IT_DIR_PATH . 'auto-creator.php';
-    require_once FREE_IT_DIR_PATH . 'order-management.php';
+
+if (!function_exists('freeit_function')) {
+    function freeit_functions()
+    {
+        require_once FREE_IT_DIR_PATH . 'includes/Functions.php';
+        return new \FREE_IT\Functions();
+    }
 }
 
-add_action('init', 'setup_plugin');
+if (!class_exists('FreeIt_CrowdFunding')) {
+    require_once FREE_IT_DIR_PATH . 'free-it-rewards.php';
+    new \FREE_IT\FreeIt_CrowdFunding();
+    require_once FREE_IT_DIR_PATH . 'auto-creator.php';
+}
+
+// add_filter('woocommerce_add_cart_item', function ($array, $int) {
+//     echo '<pre>';
+//     print_r(WC()->session);
+//     echo '</pre>';
+
+//     wp_die();
+// }, 15, 3);
