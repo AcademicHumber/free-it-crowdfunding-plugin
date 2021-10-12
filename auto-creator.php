@@ -121,7 +121,7 @@ function check_post_rewards($post_id, $key = '_freeit_rewards_campaign_id')
 }
 
 /**
- *  Debug function
+ *  Debug functions
  */
 function check_post($post_id)
 {
@@ -136,10 +136,10 @@ function check_post($post_id)
 //add_action('woocommerce_process_product_meta_crowdfunding', 'check_post');
 
 
-/*add_filter('woocommerce_add_cart_item', function ($array, $int) {
-    echo '<pre>';
-    print_r($array);
-    echo '</pre>';
+// add_filter('woocommerce_add_cart_item', function ($array, $int) {
+//     echo '<pre>';
+//     print_r(WC()->session);
+//     echo '</pre>';
 
-    wp_die();
-}, 10, 3);*/
+//     wp_die();
+// }, 15, 3);

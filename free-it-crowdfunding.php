@@ -23,6 +23,18 @@ if (!function_exists('is_plugin_active')) {
     include_once(ABSPATH . '/wp-admin/includes/plugin.php');
 }
 
+/**
+ * @Type
+ * @Version
+ * @Directory URL
+ * @Directory Path
+ * @Plugin Base Name
+ */
+define('FREE_IT_FILE', __FILE__);
+define('FREE_IT_DIR_URL', plugin_dir_url(FREE_IT_FILE));
+define('FREE_IT_DIR_PATH', plugin_dir_path(FREE_IT_FILE));
+define('FREE_IT_BASENAME', plugin_basename(FREE_IT_FILE));
+
 
 /**
  * Check for the existence of WooCommerce and any other requirements
@@ -53,9 +65,10 @@ add_action('after_setup_theme', 'freeit_check_requirements');
 
 function setup_plugin()
 {
-    require_once plugin_dir_path(__FILE__) . 'free-it-rewards.php';
-    require_once plugin_dir_path(__FILE__) . 'auto-creator.php';
-    require_once plugin_dir_path(__FILE__) . 'order-management.php';
+    require_once FREE_IT_DIR_PATH . 'free-it-rewards.php';
+    new FreeIt_CrowdFunding();
+    require_once FREE_IT_DIR_PATH . 'auto-creator.php';
+    require_once FREE_IT_DIR_PATH . 'order-management.php';
 }
 
 add_action('init', 'setup_plugin');

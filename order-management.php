@@ -34,13 +34,16 @@ function redirect_to_checkout($url)
 add_filter('woocommerce_add_to_cart_redirect',  'redirect_to_checkout'); //Skip cart page after click Donate button, going directly on checkout page
 
 
-//add_action('woocommerce_checkout_order_processed', 'check_order');
+add_action('woocommerce_thankyou', 'check_order');
 
 function check_order($order_id)
 {
-    echo '<pre>';
-    print_r($_POST);
-    echo '</pre>';
+    $order = wc_get_order($order_id);
+    $products = $order->get_items();
 
-    wp_die();
+    foreach ($products as $product) {
+        echo '<pre>';
+        print_r($product->get_product_id());
+        echo '</pre>';
+    }
 }
