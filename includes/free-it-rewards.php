@@ -33,15 +33,17 @@ class FreeIt_CrowdFunding
     public function setup_plugin()
     {
         //Register Rewards product type
-        add_action('wp_loaded',                                     array($this, 'register_product_type'));      //Initialized the product type class
-        register_activation_hook(__FILE__,                          array($this, 'install_taxonomy'));           // Install rewards taxonomy        
-        add_filter('product_type_selector',                         array($this, 'add_type_to_dropdown'));       // Add rewards type to product types dropdown 
-        add_action('woocommerce_product_options_pricing',           array($this, 'add_reward_fields'));          // Create Reward fields for the product type
-        add_action('admin_footer',                                  array($this, 'enable_product_js'));          // Add JS for product type changes
-        add_action('woocommerce_process_product_meta_reward',       array($this, 'save_reward_price'));          // Save reward information to database
-        add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'manage_rewards_crud'));        // Manage rewards creation or update based on campaign's data
-        add_action('init',                                          array($this, 'remove_default_rewards_tab')); // Remove WPCrowdfunding default rewards tab on single product
-        add_action('woocommerce_single_product_summary',            array($this, 'add_cart_button'), 15);        // Add rewards tab on single campaign       
+        add_action('wp_loaded',                                     array($this, 'register_product_type'));                   //Initialized the product type class
+        register_activation_hook(__FILE__,                          array($this, 'install_taxonomy'));                        // Install rewards taxonomy        
+        add_filter('product_type_selector',                         array($this, 'add_type_to_dropdown'));                    // Add rewards type to product types dropdown 
+        add_action('woocommerce_product_options_pricing',           array($this, 'add_reward_fields'));                       // Create Reward fields for the product type
+        add_action('admin_footer',                                  array($this, 'enable_product_js'));                       // Add JS for product type changes
+        add_action('woocommerce_process_product_meta_reward',       array($this, 'save_reward_price'));                       // Save reward information to database
+        add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'manage_rewards_crud'));                     // Manage rewards creation or update based on campaign's data
+        add_action('woocommerce_single_product_summary',            array($this, 'add_view_campaign_button'), 15);            // Add rewards tab on single campaign 
+        add_filter('woocommerce_add_cart_item',                     array($this, 'add_reward_to_crowdfunding_order'), 15, 3); // Add reward item to crowdfunding order
+        add_action('init',                                          array($this, 'remove_default_rewards_tab'));              // Remove WPCrowdfunding default rewards tab on single product
+        add_action('wpcf_campaign_story_right_sidebar',             array($this, 'add_rewards_to_single_campaign_sidebar'));  // Add Free It rewards to campaign sidebar
     }
 
 
@@ -260,7 +262,7 @@ class FreeIt_CrowdFunding
 <?php
     }
 
-    // save data on submission
+    // Save data on submission
     public function save_reward_price($post_id)
     {
         if (!empty($_POST['_freeit_rewards_pladge_amount'])) {
@@ -287,9 +289,18 @@ class FreeIt_CrowdFunding
         }
     }
 
-    // display add to cart button
-    public function add_cart_button()
+    // Display view campaign button on reward single product page
+    public function add_view_campaign_button()
     {
+        global $product;
+
+        if ($product->get_type() == 'reward') {
+            $reward_id = $product->get_id();
+            $campaign_id = get_post_meta($reward_id, '_freeit_rewards_campaign_id', true);
+
+
+            echo '<a href="' . get_permalink($campaign_id) . '" class="button alt freeit_button">' . __('View campaign', 'freeit') . '</a>';
+        }
     }
 
     /**
@@ -391,5 +402,28 @@ class FreeIt_CrowdFunding
     public function remove_default_rewards_tab()
     {
         freeit_functions()->remove_filters_for_anonymous_class('wpcf_campaign_story_right_sidebar', 'WPCF\woocommerce\Template_Hooks', 'story_right_sidebar', 10);
+    }
+
+    public function add_rewards_to_single_campaign_sidebar()
+    {
+        include FREE_IT_DIR_PATH . 'templates/wpcrowdfunding/tabs/rewards-sidebar-form.php';
+    }
+
+    /**
+     * Add reward item to crowdfunding order
+     * 
+     * @param $product
+     * @param $quantity
+     * @return mixed
+     */
+    function add_reward_to_crowdfunding_order($product, $quantity)
+    {
+        if ($product['data']->get_type() == 'crowdfunding') {
+            if (isset($_POST['reward_id'])) {
+                WC()->cart->add_to_cart($_POST['reward_id']);
+            }
+        }
+
+        return $product;
     }
 }

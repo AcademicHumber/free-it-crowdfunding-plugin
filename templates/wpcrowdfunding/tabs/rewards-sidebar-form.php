@@ -1,20 +1,32 @@
 <?php
 defined('ABSPATH') || exit;
 global $post;
-$campaign_rewards   = get_post_meta($post->ID, 'wpneo_reward', true);
-$campaign_rewards_a = json_decode($campaign_rewards, true);
+
+$rewards = freeit_functions()->check_post_rewards($post->ID);
+
+$campaign_rewards_a = [];
+foreach ($rewards as $key => $reward) {
+    $campaign_rewards_a[$key] = [
+        'wpneo_rewards_pladge_amount' => get_post_meta($reward, '_freeit_rewards_pladge_amount', true),
+        'wpneo_rewards_image_field'   => get_post_meta($reward, '_freeit_rewards_image_field', true),
+        'wpneo_rewards_description'   => get_post_meta($reward, '_freeit_rewards_description', true),
+        'wpneo_rewards_endmonth'      => get_post_meta($reward, '_freeit_rewards_endmonth', true),
+        'wpneo_rewards_endyear'       => get_post_meta($reward, '_freeit_rewards_endyear', true),
+        'wpneo_rewards_item_limit'    => get_post_meta($reward, '_freeit_rewards_item_limit', true),
+        'reward_id'                   => $reward
+    ];
+}
+
 if (is_array($campaign_rewards_a)) {
     if (count($campaign_rewards_a) > 0) {
 
         $i      = 0;
         $amount = array();
-        echo '<pre>';
-        print_r($campaign_rewards_a);
-        echo '</pre>';
+
 
         echo '<h2>' . __('Rewards', 'wp-crowdfunding') . '</h2>';
         foreach ($campaign_rewards_a as $key => $row) {
-            $amount[$key] = $row['_freeit_rewards_pladge_amount'];
+            $amount[$key] = $row['wpneo_rewards_pladge_amount'];
         }
         array_multisort($amount, SORT_ASC, $campaign_rewards_a);
 
@@ -24,17 +36,17 @@ if (is_array($campaign_rewards_a)) {
             $quantity = '';
 
             $post_id    = get_the_ID();
-            $min_data   = $value['_freeit_rewards_pladge_amount'];
+            $min_data   = $value['wpneo_rewards_pladge_amount'];
             $max_data   = '';
             $orders     = 0;
-            (!empty($campaign_rewards_a[$i]['_freeit_rewards_pladge_amount'])) ? ($max_data = $campaign_rewards_a[$i]['_freeit_rewards_pladge_amount'] - 1) : ($max_data = 9000000000);
+            (!empty($campaign_rewards_a[$i]['wpneo_rewards_pladge_amount'])) ? ($max_data = $campaign_rewards_a[$i]['wpneo_rewards_pladge_amount'] - 1) : ($max_data = 9000000000);
             if ($min_data != '') {
                 $orders = wpcf_campaign_order_number_data($min_data, $max_data, $post_id);
             }
-            if ($value['_freeit_rewards_item_limit']) {
+            if ($value['wpneo_rewards_item_limit']) {
                 $quantity = 0;
-                if ($value['_freeit_rewards_item_limit'] >= $orders) {
-                    $quantity = $value['_freeit_rewards_item_limit'] - $orders;
+                if ($value['wpneo_rewards_item_limit'] >= $orders) {
+                    $quantity = $value['wpneo_rewards_item_limit'] - $orders;
                 }
             }
 ?>
@@ -43,24 +55,24 @@ if (is_array($campaign_rewards_a)) {
                     <h3>
                         <?php
                         if (function_exists('wc_price')) {
-                            echo wc_price($value['_freeit_rewards_pladge_amount']);
+                            echo wc_price($value['wpneo_rewards_pladge_amount']);
                             if ('true' != get_option('wpneo_reward_fixed_price', '')) {
-                                echo (!empty($campaign_rewards_a[$i]['_freeit_rewards_pladge_amount'])) ? ' - ' . wc_price($campaign_rewards_a[$i]['_freeit_rewards_pladge_amount'] - 1) : __(" or more", 'wp-crowdfunding');
+                                echo (!empty($campaign_rewards_a[$i]['wpneo_rewards_pladge_amount'])) ? ' - ' . wc_price($campaign_rewards_a[$i]['wpneo_rewards_pladge_amount'] - 1) : __(" or more", 'wp-crowdfunding');
                             }
                         }
                         ?>
                     </h3>
-                    <div><?php echo wpautop(wp_unslash($value['_freeit_rewards_description'])); ?></div>
-                    <?php if ($value['_freeit_rewards_image_field']) { ?>
+                    <div><?php echo wpautop(wp_unslash($value['wpneo_rewards_description'])); ?></div>
+                    <?php if ($value['wpneo_rewards_image_field']) { ?>
                         <div class="wpneo-rewards-image">
                             <?php echo '<img src="' . wp_get_attachment_url($value["wpneo_rewards_image_field"]) . '"/>'; ?>
                         </div>
                     <?php } ?>
 
                     <?php
-                    if (!empty($value['_freeit_rewards_endmonth']) || !empty($value['_freeit_rewards_endyear'])) {
-                        $month = date_i18n("F", strtotime($value['_freeit_rewards_endmonth']));
-                        $year = date_i18n("Y", strtotime($value['_freeit_rewards_endyear'] . '-' . $month . '-15'));
+                    if (!empty($value['wpneo_rewards_endmonth']) || !empty($value['wpneo_rewards_endyear'])) {
+                        $month = date_i18n("F", strtotime($value['wpneo_rewards_endmonth']));
+                        $year = date_i18n("Y", strtotime($value['wpneo_rewards_endyear'] . '-' . $month . '-15'));
 
                         echo "<h4>{$month}, {$year}</h4>";
                         echo '<div>' . __('Estimated Delivery', 'wp-crowdfunding') . '</div>';
@@ -79,10 +91,11 @@ if (is_array($campaign_rewards_a)) {
                                                 <span class="wpneo-error"><?php _e('Reward no longer available.', 'wp-crowdfunding'); ?></span>
                                             <?php } else { ?>
                                                 <form enctype="multipart/form-data" method="post" class="cart">
-                                                    <input type="hidden" value="<?php echo $value['_freeit_rewards_pladge_amount']; ?>" name="wpneo_donate_amount_field" />
+                                                    <input type="hidden" value="<?php echo $value['wpneo_rewards_pladge_amount']; ?>" name="wpneo_donate_amount_field" />
                                                     <input type="hidden" value='<?php echo json_encode($value); ?>' name="wpneo_selected_rewards_checkout" />
                                                     <input type="hidden" value="<?php echo $key; ?>" name="wpneo_rewards_index" />
                                                     <input type="hidden" value="<?php echo esc_attr($post->post_author); ?>" name="_cf_product_author_id">
+                                                    <input type="hidden" value="<?php echo $value['reward_id']; ?>" name="reward_id">
                                                     <input type="hidden" value="<?php echo esc_attr($post->ID); ?>" name="add-to-cart">
                                                     <button type="submit" class="select_rewards_button"><?php _e('Select Reward', 'wp-crowdfunding'); ?></button>
                                                 </form>
@@ -96,11 +109,11 @@ if (is_array($campaign_rewards_a)) {
                                         <span class="wpneo-error"><?php _e('Reward no longer available.', 'wp-crowdfunding'); ?></span>
                                     <?php else : ?>
                                         <form enctype="multipart/form-data" method="post" class="cart">
-                                            <input type="hidden" value="<?php echo $value['_freeit_rewards_pladge_amount']; ?>" name="wpneo_donate_amount_field" />
+                                            <input type="hidden" value="<?php echo $value['wpneo_rewards_pladge_amount']; ?>" name="wpneo_donate_amount_field" />
                                             <input type="hidden" value='<?php echo json_encode($value); ?>' name="wpneo_selected_rewards_checkout" />
                                             <input type="hidden" value="<?php echo $key; ?>" name="wpneo_rewards_index" />
                                             <input type="hidden" value="<?php echo esc_attr($post->post_author); ?>" name="_cf_product_author_id">
-                                            <input type="hidden" value="<?php echo esc_attr($post->ID); ?>" name="add-to-cart">
+                                            <input type="hidden" value="<?php echo $value['reward_id']; ?>" name="add-to-cart">
                                             <button type="submit" class="select_rewards_button"><?php _e('Select Reward', 'wp-crowdfunding'); ?></button>
                                         </form>
                                     <?php endif; ?>
@@ -132,7 +145,7 @@ if (is_array($campaign_rewards_a)) {
                     if ($min_data != '') {
                         echo '<div>' . $orders . ' ' . __('backers', 'wp-crowdfunding') . '</div>';
                     } ?>
-                    <?php if ($value['_freeit_rewards_item_limit']) { ?>
+                    <?php if ($value['wpneo_rewards_item_limit']) { ?>
                         <div>
                             <?php
                             echo $quantity;

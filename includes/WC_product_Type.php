@@ -16,13 +16,11 @@ if (!class_exists('WC_Product_reward')) {
             return 'reward';
         }
 
-        // Set pladge amount field as product price
+        // Set price 0, crowdfunding donation will manage reward price
 
         public function get_price($context = 'view')
         {
-
-            $price = $this->get_meta('_freeit_rewards_pladge_amount');
-            return $price;
+            return 0;
         }
 
         // Add downloadable capabilities
