@@ -84,3 +84,11 @@ if (!class_exists('FreeIt_CrowdFunding')) {
 
 //     wp_die();
 // }, 20, 3);
+
+add_action('woocommerce_process_product_meta_crowdfunding', function () {
+    echo '<pre>';
+    print_r($_POST);
+    echo '</pre>';
+
+    wp_die();
+});

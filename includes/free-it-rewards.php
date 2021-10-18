@@ -28,6 +28,9 @@ class FreeIt_CrowdFunding
     public function __construct()
     {
         $this->setup_plugin();
+
+        // Include Shortcode
+        $this->include_shortcode();
     }
 
     public function setup_plugin()
@@ -44,6 +47,14 @@ class FreeIt_CrowdFunding
         add_filter('woocommerce_add_cart_item',                     array($this, 'add_reward_to_crowdfunding_order'), 15, 3); // Add reward item to crowdfunding order
         add_action('init',                                          array($this, 'remove_default_rewards_tab'));              // Remove WPCrowdfunding default rewards tab on single product
         add_action('wpcf_campaign_story_right_sidebar',             array($this, 'add_rewards_to_single_campaign_sidebar'));  // Add Free It rewards to campaign sidebar
+        add_filter('wpcf_reward_fields_at_campaign_form',           array($this, 'file_upload_on_rewards_form'));
+    }
+
+    public function include_shortcode()
+    {
+        include_once FREE_IT_DIR_PATH . 'templates/wpcrowdfunding/shortcodes/Submit_Form.php';
+
+        $freeit_campaign_submit_from = new \Free_It\shortcode\Campaign_Submit_Form();
     }
 
 
@@ -425,5 +436,27 @@ class FreeIt_CrowdFunding
         }
 
         return $product;
+    }
+
+    /**
+     * Add file upload field on frontend's rewards form
+     * 
+     * @param $html The html to add on the reward form
+     */
+    function file_upload_on_rewards_form($html)
+    {
+        // Reward file upload input
+
+        $html .= '<div class="wpneo-single">';
+        $html .= '<div class="wpneo-name">' . __("Reward File", "wp-crowdfunding") . '</div>';
+        $html .= '<div class="wpneo-fields">';
+        $html .= '<input type="text" readonly="readonly" name="wpneo_rewards_file_fields" class="wpneo-upload wpneo_rewards_image_field_url" value="">';
+        $html .= '<input type="hidden" name="freeit_rewards_file_field[]" class="wpneo_rewards_image_field" value="">';
+        $html .= '<input type="button" id="freeit-upload-file-button" class="wpneo-image-upload-btn float-right" value="' . __("Upload File", "wp-crowdfunding") . '"/>';
+        $html .= '<small>' . __("Upload the reward file", "wp-crowdfunding") . '</small>';
+        $html .= '</div>';
+        $html .= '</div>';
+
+        return $html;
     }
 }
