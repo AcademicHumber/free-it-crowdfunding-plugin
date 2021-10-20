@@ -10,6 +10,8 @@
 
 namespace Free_It;
 
+use WC_Product_Download;
+
 if (!defined('ABSPATH')) exit; // Exit if accessed directly
 
 class FreeIt_CrowdFunding
@@ -29,12 +31,13 @@ class FreeIt_CrowdFunding
     {
         $this->setup_plugin();
 
-        // Include Shortcode
-        $this->include_shortcode();
+        // Add overwrites
+        $this->include_overwrites();
     }
 
     public function setup_plugin()
     {
+        add_action('admin_enqueue_scripts',                         array($this, 'include_scripts'));                          //Add Additional backend js and css        
         //Register Rewards product type
         add_action('wp_loaded',                                     array($this, 'register_product_type'));                   //Initialized the product type class
         register_activation_hook(__FILE__,                          array($this, 'install_taxonomy'));                        // Install rewards taxonomy        
@@ -45,16 +48,35 @@ class FreeIt_CrowdFunding
         add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'manage_rewards_crud'));                     // Manage rewards creation or update based on campaign's data
         add_action('woocommerce_single_product_summary',            array($this, 'add_view_campaign_button'), 15);            // Add rewards tab on single campaign 
         add_filter('woocommerce_add_cart_item',                     array($this, 'add_reward_to_crowdfunding_order'), 15, 3); // Add reward item to crowdfunding order
-        add_action('init',                                          array($this, 'remove_default_rewards_tab'));              // Remove WPCrowdfunding default rewards tab on single product
-        add_action('wpcf_campaign_story_right_sidebar',             array($this, 'add_rewards_to_single_campaign_sidebar'));  // Add Free It rewards to campaign sidebar
-        add_filter('wpcf_reward_fields_at_campaign_form',           array($this, 'file_upload_on_rewards_form'));
     }
 
-    public function include_shortcode()
+    /**
+     * Includes all overwrites of wpcrowdfunding base code
+     */
+    function include_overwrites()
     {
-        include_once FREE_IT_DIR_PATH . 'templates/wpcrowdfunding/shortcodes/Submit_Form.php';
+        require_once FREE_IT_DIR_PATH . 'includes/overwrites.php';
+        new \Free_It\Wp_Crowdfunding_OverWrites();
+    }
 
-        $freeit_campaign_submit_from = new \Free_It\shortcode\Campaign_Submit_Form();
+    /**
+     * Includes all required scripts for the plugin
+     */
+    function include_scripts()
+    {
+        wp_enqueue_script(
+            'freeit-rewards-js',
+            FREE_IT_DIR_URL . 'assets/js/free-it-crowdfunding.js',
+            array('jquery', 'wp-color-picker'),
+            filemtime(FREE_IT_DIR_PATH . 'assets/js/free-it-crowdfunding.js'),
+            true
+        );
+        wp_enqueue_style(
+            'freeit-rewards-css',
+            FREE_IT_DIR_URL . 'assets/css/free-it-crowdfunding.css',
+            array(),
+            filemtime(FREE_IT_DIR_PATH . 'assets/css/free-it-crowdfunding.css')
+        );
     }
 
 
@@ -342,8 +364,10 @@ class FreeIt_CrowdFunding
                     'endmonth'          => $_POST['wpneo_rewards_endmonth'][$i],
                     'endyear'           => $_POST['wpneo_rewards_endyear'][$i],
                     'item_limit'        => $_POST['wpneo_rewards_item_limit'][$i],
+                    'file_id'           => $_POST['freeit_rewards_file_field'][$i],
                 ];
 
+                $reward_id = 0;
 
                 // If there are more than 1 reward, reduce the index (it should not enter on the first iteration)
 
@@ -368,13 +392,13 @@ class FreeIt_CrowdFunding
                             '_freeit_rewards_endmonth'      => $reward_data['endmonth'],
                             '_freeit_rewards_endyear'       => $reward_data['endyear'],
                             '_freeit_rewards_item_limit'    => $reward_data['item_limit'],
-
                         ]
                     ];
 
                     $reward_id = wp_update_post($reward_args);
 
                     // echo "updated post: " . $reward_id;
+
                 } else {
 
                     //Create new reward post
@@ -397,27 +421,51 @@ class FreeIt_CrowdFunding
                         ]
                     ];
 
-
-
                     $reward_id = wp_insert_post($reward_args);
 
                     wp_set_object_terms($reward_id, 'reward', 'product_type');
 
                     // echo "Created post: " . $reward_id;
                 }
+
+                /**
+                 * Manage reward downloadable product
+                 */
+
+                if ($reward_data['file_id']) {
+
+                    $file_id     = $reward_data['file_id'];
+                    $file_name   = get_the_title($file_id);
+                    $file_url    = wp_get_attachment_url($file_id);
+
+                    // Set a specific hash to downloadable rewards, in case the file changes                    
+                    $download_id = md5('freeit_rewards_downloadable_file');
+
+                    // Creating an empty instance of a WC_Product_Download object
+                    $downloadable_object = new WC_Product_Download();
+
+                    // Set the data in the WC_Product_Download object
+                    $downloadable_object->set_id($download_id);
+                    $downloadable_object->set_name($file_name);
+                    $downloadable_object->set_file($file_url);
+
+                    // Get an instance of the WC_Product object
+                    $product = wc_get_product($reward_id);
+
+                    /* Get existing downloads (if they exist)
+                    *  Uncomment next line to stack downloadable files (also change the download id)
+                    */
+                    //$downloads = $product->get_downloads();
+
+                    // Add the new WC_Product_Download object to the array
+                    $downloads[$download_id] = $downloadable_object;
+
+                    // Set the complete downloads array in the product
+                    $product->set_downloads($downloads);
+                    $product->save(); // Save the data in database
+                }
             }
         }
-    }
-
-
-    public function remove_default_rewards_tab()
-    {
-        freeit_functions()->remove_filters_for_anonymous_class('wpcf_campaign_story_right_sidebar', 'WPCF\woocommerce\Template_Hooks', 'story_right_sidebar', 10);
-    }
-
-    public function add_rewards_to_single_campaign_sidebar()
-    {
-        include FREE_IT_DIR_PATH . 'templates/wpcrowdfunding/tabs/rewards-sidebar-form.php';
     }
 
     /**
@@ -436,27 +484,5 @@ class FreeIt_CrowdFunding
         }
 
         return $product;
-    }
-
-    /**
-     * Add file upload field on frontend's rewards form
-     * 
-     * @param $html The html to add on the reward form
-     */
-    function file_upload_on_rewards_form($html)
-    {
-        // Reward file upload input
-
-        $html .= '<div class="wpneo-single">';
-        $html .= '<div class="wpneo-name">' . __("Reward File", "wp-crowdfunding") . '</div>';
-        $html .= '<div class="wpneo-fields">';
-        $html .= '<input type="text" readonly="readonly" name="wpneo_rewards_file_fields" class="wpneo-upload wpneo_rewards_image_field_url" value="">';
-        $html .= '<input type="hidden" name="freeit_rewards_file_field[]" class="wpneo_rewards_image_field" value="">';
-        $html .= '<input type="button" id="freeit-upload-file-button" class="wpneo-image-upload-btn float-right" value="' . __("Upload File", "wp-crowdfunding") . '"/>';
-        $html .= '<small>' . __("Upload the reward file", "wp-crowdfunding") . '</small>';
-        $html .= '</div>';
-        $html .= '</div>';
-
-        return $html;
     }
 }

@@ -1,0 +1,9 @@
+.freeit-file-upload-btn {
+  border: none;
+  color: #fff;
+  padding: 4px 10px;
+  cursor: pointer;
+  background-color: #94c94a;
+  position: inherit;
+  margin-left: 20px;
+}
