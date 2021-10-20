@@ -75,19 +75,3 @@ if (!class_exists('FreeIt_CrowdFunding')) {
     require_once FREE_IT_DIR_PATH . 'includes/free-it-rewards.php';
     new \FREE_IT\FreeIt_CrowdFunding();
 }
-
-// add_filter('woocommerce_add_cart_item', function ($array, $int) {
-//     echo '<pre>';
-//     print_r(WC()->session);
-//     echo '</pre>';
-
-//     wp_die();
-// }, 20, 3);
-
-// add_action('woocommerce_process_product_meta_crowdfunding', function () {
-//     echo '<pre>';
-//     print_r($_POST);
-//     echo '</pre>';
-
-//     wp_die();
-// });
