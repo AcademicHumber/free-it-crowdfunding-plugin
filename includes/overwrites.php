@@ -368,7 +368,7 @@ class Wp_Crowdfunding_OverWrites
     function back_campaign_btn()
     {
         global $post;
-        echo '<button class="freeit-back-campaign-btn" data-campaign="' . $post->ID . '">' . __('Back Campaign', 'wp-crowdfunding') . '</button>';
+        echo '<button class="freeit-back-campaign-btn " data-campaign="' . $post->ID . '">' . __('Back Campaign', 'wp-crowdfunding') . '</button>';
     }
 
     /**

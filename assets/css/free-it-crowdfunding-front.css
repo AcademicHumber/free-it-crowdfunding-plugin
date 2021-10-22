@@ -4,6 +4,19 @@
   display: none;
 }
 
+.freeit-back-campaign-btn {
+  background: #1adc68;
+  color: #fff;
+  font-size: 14px;
+  padding: 14px 25px;
+  text-transform: capitalize;
+  transition: 400ms;
+  -webkit-transition: 400ms;
+  font-weight: 300;
+  border-radius: 3px;
+  border: none;
+}
+
 /* Change default modal styles*/
 .wpneo-modal-content-inner
   :is(.tab-rewards-wrapper, .wpneo-single-sidebar)
