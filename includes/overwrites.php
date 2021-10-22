@@ -7,10 +7,16 @@ class Wp_Crowdfunding_OverWrites
 
     function __construct()
     {
-        add_action('plugins_loaded',         array($this, 'frontend_form_process'));                //Include all of resource to the plugin 
-        add_action('init',                   array($this, 'remove_default_rewards_tab'));           // Remove WPCrowdfunding default rewards tab on single product
-        add_action('init',                   array($this, 'remove_default_admin_rewards_tab'));     // Remove WPCrowdfunding default rewards tab on single product admin page
-        add_action('init',                   array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
+        add_action('plugins_loaded',                    array($this, 'frontend_form_process'));                //Include all of resource to the plugin 
+        add_action('init',                              array($this, 'remove_default_rewards_tab'));           // Remove WPCrowdfunding default rewards tab on single product
+        add_action('init',                              array($this, 'remove_default_admin_rewards_tab'));     // Remove WPCrowdfunding default rewards tab on single product admin page
+        add_action('init',                              array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
+        add_action('wpcf_single_campaign_summary',      array($this, 'back_campaign_btn'), 20);                // Add new back campaign button
+
+        // AJAX
+
+        add_action('wp_ajax_free_it_donate_campaign',          array($this, 'campaign_donation_popup'));       // Generates the html for the campaign donation popup
+        add_action('wp_ajax_nopriv_free_it_donate_campaign',   array($this, 'campaign_donation_popup'));       // Generates the html for the campaign donation popup
 
         // Include Shortcode
         $this->include_shortcode();
@@ -210,7 +216,12 @@ class Wp_Crowdfunding_OverWrites
                         break;
 
                     case 'file':
-                        woocommerce_wp_text_input($value);
+                        echo '<p class="form-field">';
+                        echo '<label for="wpneo_rewards_image_field">' . $value["label"] . '</label>';
+                        echo '<input type="text" readonly="readonly" class="freeit_rewards_file_url_field" value="' . $value["value"] . '" placeholder="' . $value["label"] . '"/>';
+                        echo '<input type="hidden" class="freeit_rewards_file_field" name="' . $value["id"] . '" value="' . $value["value"] . '"/>';
+                        echo '<button class="freeit-file-upload-btn shorter">' . __("Upload", "wp-crowdfunding") . '</button>';
+                        echo '</p>';
                         break;
 
 
@@ -348,5 +359,27 @@ class Wp_Crowdfunding_OverWrites
             $data_json = json_encode($data, JSON_UNESCAPED_UNICODE);
             wpcf_function()->update_meta($post_id, 'wpneo_reward', wp_slash($data_json));
         }
+    }
+
+    /**
+     * Adds new back campaign button, it generates a popup for backing the campaign with donation or rewards
+     */
+
+    function back_campaign_btn()
+    {
+        global $post;
+        echo '<button class="freeit-back-campaign-btn" data-campaign="' . $post->ID . '">' . __('Back Campaign', 'wp-crowdfunding') . '</button>';
+    }
+
+    /**
+     * Returns the html for the campaign donation popup, it contains donation button and rewards
+     */
+    function campaign_donation_popup()
+    {
+        $contribution_html = '<div id="contribution-box"><h4>Make a donation</h4></div>';
+        include FREE_IT_DIR_PATH . 'templates/popup/rewards-list.php';
+
+        $pop_up_html = $contribution_html . $rewards_html;
+        die(json_encode(array('success' => 1, 'message' => $pop_up_html, 'title' => 'Back this camapaign')));
     }
 }

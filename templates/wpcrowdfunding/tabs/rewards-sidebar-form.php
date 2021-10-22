@@ -23,8 +23,7 @@ if (is_array($campaign_rewards_a)) {
         $i      = 0;
         $amount = array();
 
-
-        echo '<h2>' . __('Rewards', 'wp-crowdfunding') . '</h2>';
+        echo '<h2>' . __('The Rewards', 'wp-crowdfunding') . '</h2>';
         foreach ($campaign_rewards_a as $key => $row) {
             $amount[$key] = $row['wpneo_rewards_pladge_amount'];
         }
@@ -113,7 +112,8 @@ if (is_array($campaign_rewards_a)) {
                                             <input type="hidden" value='<?php echo json_encode($value); ?>' name="wpneo_selected_rewards_checkout" />
                                             <input type="hidden" value="<?php echo $key; ?>" name="wpneo_rewards_index" />
                                             <input type="hidden" value="<?php echo esc_attr($post->post_author); ?>" name="_cf_product_author_id">
-                                            <input type="hidden" value="<?php echo $value['reward_id']; ?>" name="add-to-cart">
+                                            <input type="hidden" value="<?php echo $value['reward_id']; ?>" name="reward_id">
+                                            <input type="hidden" value="<?php echo esc_attr($post->ID); ?>" name="add-to-cart">
                                             <button type="submit" class="select_rewards_button"><?php _e('Select Reward', 'wp-crowdfunding'); ?></button>
                                         </form>
                                     <?php endif; ?>

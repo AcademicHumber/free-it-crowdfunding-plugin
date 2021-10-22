@@ -37,7 +37,8 @@ class FreeIt_CrowdFunding
 
     public function setup_plugin()
     {
-        add_action('admin_enqueue_scripts',                         array($this, 'include_scripts'));                          //Add Additional backend js and css        
+        add_action('admin_enqueue_scripts',                         array($this, 'include_admin_scripts'));                   //Add Additional backend js and css        
+        add_action('wp_enqueue_scripts',                            array($this, 'include_front_scripts'));                   //Add Additional frontend js and css        
         //Register Rewards product type
         add_action('wp_loaded',                                     array($this, 'register_product_type'));                   //Initialized the product type class
         register_activation_hook(__FILE__,                          array($this, 'install_taxonomy'));                        // Install rewards taxonomy        
@@ -60,22 +61,59 @@ class FreeIt_CrowdFunding
     }
 
     /**
-     * Includes all required scripts for the plugin
+     * Includes all required admin scripts for the plugin
      */
-    function include_scripts()
+    function include_admin_scripts()
     {
+        //JS
+
         wp_enqueue_script(
-            'freeit-rewards-js',
+            'freeit-rewards-admin-js',
             FREE_IT_DIR_URL . 'assets/js/free-it-crowdfunding.js',
             array('jquery', 'wp-color-picker'),
             filemtime(FREE_IT_DIR_PATH . 'assets/js/free-it-crowdfunding.js'),
             true
         );
+
+        //CSS
+
         wp_enqueue_style(
-            'freeit-rewards-css',
+            'freeit-rewards-admin-css',
             FREE_IT_DIR_URL . 'assets/css/free-it-crowdfunding.css',
             array(),
             filemtime(FREE_IT_DIR_PATH . 'assets/css/free-it-crowdfunding.css')
+        );
+
+        wp_enqueue_style(
+            'freeit-rewards-front-css',
+            FREE_IT_DIR_URL . 'assets/css/free-it-crowdfunding-front.css',
+            array(),
+            filemtime(FREE_IT_DIR_PATH . 'assets/css/free-it-crowdfunding-front.css')
+        );
+    }
+
+    /**
+     * Includes all required front scripts for the plugin
+     */
+    function include_front_scripts()
+    {
+        // JS
+
+        wp_enqueue_script(
+            'freeit-rewards-front-js',
+            FREE_IT_DIR_URL . 'assets/js/free-it-crowdfunding-front.js',
+            array('jquery'),
+            filemtime(FREE_IT_DIR_PATH . 'assets/js/free-it-crowdfunding-front.js'),
+            true
+        );
+
+        //CSS
+
+        wp_enqueue_style(
+            'freeit-rewards-front-css',
+            FREE_IT_DIR_URL . 'assets/css/free-it-crowdfunding-front.css',
+            array(),
+            filemtime(FREE_IT_DIR_PATH . 'assets/css/free-it-crowdfunding-front.css')
         );
     }
 
