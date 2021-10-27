@@ -30,6 +30,7 @@ class FreeIt_CrowdFunding
     public function __construct()
     {
         $this->setup_plugin();
+        $this->fix_bugs();
 
         // Add overwrites
         $this->include_overwrites();
@@ -45,10 +46,31 @@ class FreeIt_CrowdFunding
         add_filter('product_type_selector',                         array($this, 'add_type_to_dropdown'));                    // Add rewards type to product types dropdown 
         add_action('woocommerce_product_options_pricing',           array($this, 'add_reward_fields'));                       // Create Reward fields for the product type
         add_action('admin_footer',                                  array($this, 'enable_product_js'));                       // Add JS for product type changes
-        add_action('woocommerce_process_product_meta_reward',       array($this, 'save_reward_price'));                       // Save reward information to database
+        add_action('woocommerce_process_product_meta_reward',       array($this, 'save_reward_meta'));                        // Save reward metadata to database
         add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'manage_rewards_crud'));                     // Manage rewards creation or update based on campaign's data
         add_action('woocommerce_single_product_summary',            array($this, 'add_view_campaign_button'), 15);            // Add rewards tab on single campaign 
         add_filter('woocommerce_add_cart_item',                     array($this, 'add_reward_to_crowdfunding_order'), 15, 3); // Add reward item to crowdfunding order
+        add_action('woocommerce_add_to_cart_validation',            array($this, 'remove_reward_item_from_cart'), 10, 5);     // Remove crowdfunding item from cart
+
+        // add_action('woocommerce_process_product_meta_crowdfunding', function () {
+        //     wp_die();
+        // }, 99);
+    }
+
+    function fix_bugs()
+    {
+
+        add_action('wpcf_after_user_registration',  array($this, 'auto_login_new_user')); // Fix autologin bug when a new user register.
+    }
+
+    /*
+    * auto log in after new user registration
+    */
+    function auto_login_new_user($user_id)
+    {
+
+        wp_set_current_user($user_id);
+        wp_set_auth_cookie($user_id);
     }
 
     /**
@@ -334,7 +356,7 @@ class FreeIt_CrowdFunding
     }
 
     // Save data on submission
-    public function save_reward_price($post_id)
+    public function save_reward_meta($post_id)
     {
         if (!empty($_POST['_freeit_rewards_pladge_amount'])) {
 
@@ -435,8 +457,9 @@ class FreeIt_CrowdFunding
 
                     $reward_id = wp_update_post($reward_args);
 
-                    // echo "updated post: " . $reward_id;
+                    wp_set_object_terms($reward_id, 'reward', 'product_type');
 
+                    //echo "updated post: " . $reward_id;
                 } else {
 
                     //Create new reward post
@@ -463,7 +486,7 @@ class FreeIt_CrowdFunding
 
                     wp_set_object_terms($reward_id, 'reward', 'product_type');
 
-                    // echo "Created post: " . $reward_id;
+                    //echo "Created post: " . $reward_id;
                 }
 
                 /**
@@ -522,5 +545,25 @@ class FreeIt_CrowdFunding
         }
 
         return $product;
+    }
+
+    /**
+     * Remove Reward item form cart when user adds another item
+     */
+    public function remove_reward_item_from_cart($passed, $product_id, $quantity, $variation_id = '', $variations = '')
+    {
+        $product = wc_get_product($product_id);
+
+        if ($product->get_type() == 'reward') {
+            foreach (WC()->cart->cart_contents as $item_cart_key => $prod_in_cart) {
+                WC()->cart->remove_cart_item($item_cart_key);
+            }
+        }
+        foreach (WC()->cart->cart_contents as $item_cart_key => $prod_in_cart) {
+            if ($prod_in_cart['data']->get_type() == 'reward') {
+                WC()->cart->remove_cart_item($item_cart_key);
+            }
+        }
+        return $passed;
     }
 }

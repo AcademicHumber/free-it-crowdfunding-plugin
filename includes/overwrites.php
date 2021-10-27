@@ -11,12 +11,14 @@ class Wp_Crowdfunding_OverWrites
         add_action('init',                              array($this, 'remove_default_rewards_tab'));           // Remove WPCrowdfunding default rewards tab on single product
         add_action('init',                              array($this, 'remove_default_admin_rewards_tab'));     // Remove WPCrowdfunding default rewards tab on single product admin page
         add_action('init',                              array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
+        add_action('init',                              array($this, 'remove_default_order_ajax'));            // Remove WPCrowdfunding default show order ajax action
         add_action('wpcf_single_campaign_summary',      array($this, 'back_campaign_btn'), 20);                // Add new back campaign button
 
         // AJAX
 
         add_action('wp_ajax_free_it_donate_campaign',          array($this, 'campaign_donation_popup'));       // Generates the html for the campaign donation popup
         add_action('wp_ajax_nopriv_free_it_donate_campaign',   array($this, 'campaign_donation_popup'));       // Generates the html for the campaign donation popup
+
 
         // Include Shortcode
         $this->include_shortcode();
@@ -314,7 +316,7 @@ class Wp_Crowdfunding_OverWrites
             <input name="save" type="button" class="button button-primary tagadd" id="addreward" value="<?php _e('+ Add Reward', 'wp-crowdfunding'); ?>">
         </div>
 
-<?php
+        <?php
     }
 
     /**
@@ -381,5 +383,134 @@ class Wp_Crowdfunding_OverWrites
 
         $pop_up_html = $contribution_html . $rewards_html;
         die(json_encode(array('success' => 1, 'message' => $pop_up_html, 'title' => 'Back this camapaign')));
+    }
+
+    /**
+     * Removes default wpCorwdfunding show order process on dashboard
+     */
+    function remove_default_order_ajax()
+    {
+        freeit_functions()->remove_filters_for_anonymous_class('wp_ajax_wpcf_order_action', 'WPCF\woocommerce\Dashboard', 'order_campaign_action', 10);
+        add_action('wp_ajax_wpcf_order_action', array($this, 'freeit_order_campaign_action'));
+    }
+    /**
+     * Adds the modified order html for the show order popup on dashboard
+     */
+    function freeit_order_campaign_action()
+    {
+        if (!is_user_logged_in()) {
+            die(json_encode(array('success' => 0, 'message' => __('Please Sign In first', 'wp-crowdfunding'))));
+        }
+
+        $html = '';
+        $order_id         = sanitize_text_field($_POST['orderid']);
+        if ($order_id) {
+            $order = new \WC_Order($order_id);
+            $html .= '<div>';
+            $html .= '<div><span>' . __("Order ID", "wp-crowdfunding") . ':</span> ' . $order->get_ID() . '</div>';
+            $html .= '<div><span>' . __("Order Date", "wp-crowdfunding") . ':</span> ' . wc_format_datetime($order->get_date_created()) . '</div>';
+            $html .= '<div><span>' . __("Order Status", "wp-crowdfunding") . ':</span> ' . wc_get_order_status_name($order->get_status()) . '</div>';
+
+            $html .= '<table>';
+            $html .= '<thead>';
+            $html .= '<tr>';
+            $html .= '<th>' . __("Product", "woocommerce") . '</th>';
+            $html .= '<th>' . __("Total", "woocommerce") . '</th>';
+            $html .= '</tr>';
+            $html .= '</thead>';
+            $html .= '<tbody>';
+
+            foreach ($order->get_items() as $item_id => $item) {
+                $product = apply_filters('woocommerce_order_item_product', $item->get_product(), $item);
+                $html .= '<tr>';
+                $html .= '<td>';
+                $is_visible        = $product && $product->is_visible();
+                $product_permalink = apply_filters('woocommerce_order_item_permalink', $is_visible ? $product->get_permalink($item) : '', $item, $order);
+                $html .= apply_filters('woocommerce_order_item_name', $product_permalink ? sprintf('<a href="%s">%s</a>', $product_permalink, $item->get_name()) : $item->get_name(), $item, $is_visible);
+                $html .= apply_filters('woocommerce_order_item_quantity_html', ' <strong class="product-quantity">' . sprintf('&times; %s', $item->get_quantity()) . '</strong>', $item);
+                do_action('woocommerce_order_item_meta_start', $item_id, $item, $order);
+                $html .= wc_display_item_meta($item, ['echo' => false]);
+                $html .= wc_display_item_downloads($item, ['echo' => false]);
+                do_action('woocommerce_order_item_meta_end', $item_id, $item, $order);
+                $html .= '</td>';
+                $html .= '<td class="woocommerce-table__product-total product-total">';
+                $html .= $order->get_formatted_line_subtotal($item);
+                $html .= '</td>';
+                $html .= '</tr>';
+            }
+
+            ob_start();
+            $r = get_post_meta($order_id, 'wpneo_selected_reward', true);
+            $r = json_decode($r, true);
+            if (!empty($r) && is_array($r)) {
+        ?>
+                <tr>
+                    <td>
+                        <h4><?php _e('Selected Reward', 'wp-crowdfunding'); ?> </h4>
+                        <?php
+                        if (!empty($r['wpneo_rewards_description'])) {
+                            // echo "<div>{$r['wpneo_rewards_description']}</div>";
+                            echo "<div>" . wpautop($r['wpneo_rewards_description']) . "</div>";
+                        }
+                        if (!empty($r['wpneo_rewards_pladge_amount'])) { ?>
+                            <?php echo sprintf('Amount : %s, Delivery : %s', wc_price($r['wpneo_rewards_pladge_amount']), $r['wpneo_rewards_endmonth'] . ', ' . $r['wpneo_rewards_endyear']); ?>
+                        <?php } ?>
+                    </td>
+                    <td> </td>
+                </tr>
+<?php
+            }
+            $html .= ob_get_clean();
+
+            $html .= '<tr>';
+            $html .= '<td>' . __('Subtotal:', 'wp-crowdfunding') . '</td>';
+            $html .= '<td>' . wc_price($order->get_subtotal()) . '</td>';
+            $html .= '</tr>';
+
+            $html .= '<tr>';
+            $html .= '<td>' . __('Payments Method:', 'wp-crowdfunding') . '</td>';
+            $html .= '<td>' . $order->get_payment_method_title() . '</td>';
+            $html .= '</tr>';
+
+            $html .= '<tr>';
+            $html .= '<td>' . __('Total:', 'wp-crowdfunding') . '</td>';
+            $html .= '<td>' . wc_price($order->get_total()) . '</td>';
+            $html .= '</tr>';
+            $html .= '</tbody>';
+            $html .= '</table>';
+
+            // Customer Details
+            $html .= '<h3>' . __("Customer details", "wp-crowdfunding") . '</h3>';
+            $html .= '<table>';
+            if ($order->get_customer_note()) :
+                $html .= '<tr>';
+                $html .= '<th>' . __("Note:", "wp-crowdfunding") . '</th>';
+                $html .= '<td>' . wptexturize($order->get_customer_note()) . '</td>';
+                $html .= '</tr>';
+            endif;
+            if ($order->get_billing_email()) :
+                $html .= '<tr>';
+                $html .= '<th>' . __("Email:", "wp-crowdfunding") . '</th>';
+                $html .= '<td>' . esc_html__($order->get_billing_email()) . '</td>';
+                $html .= '</tr>';
+            endif;
+            if ($order->get_billing_phone()) :
+                $html .= '<tr>';
+                $html .= '<th>' . __("Phone:", "wp-crowdfunding") . '</th>';
+                $html .= '<td>' . esc_html__($order->get_billing_phone()) . '</td>';
+                $html .= '</tr>';
+            endif;
+            $html .= '</table>';
+
+
+            // Billings Address
+            $html .= '<h3>' . __('Billing Address:', 'wp-crowdfunding') . '</h3>';
+            $html .= '<address>';
+            $html .= ($address = $order->get_formatted_billing_address()) ? $address : __('N/A', 'woocommerce');
+            $html .= '</address>';
+
+            $html .= '</div>';
+        }
+        die(json_encode(array('success' => 1, 'message' => $html)));
     }
 }
