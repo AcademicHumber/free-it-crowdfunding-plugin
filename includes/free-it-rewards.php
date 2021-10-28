@@ -11,6 +11,7 @@
 namespace Free_It;
 
 use WC_Product_Download;
+use WC_Product_Reward;
 
 if (!defined('ABSPATH')) exit; // Exit if accessed directly
 
@@ -484,8 +485,10 @@ class FreeIt_CrowdFunding
 
                     $reward_id = wp_insert_post($reward_args);
 
-                    wp_set_object_terms($reward_id, 'reward', 'product_type');
+                    // ASign post product type to reward
+                    $reward_product = new WC_Product_Reward($reward_id);
 
+                    $reward_product->save();
                     //echo "Created post: " . $reward_id;
                 }
 

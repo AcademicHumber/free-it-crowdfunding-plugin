@@ -294,7 +294,7 @@ class Wp_Crowdfunding_OverWrites
                                     echo '<p class="form-field">';
                                     echo '<label for="wpneo_rewards_image_field">' . $value["label"] . '</label>';
                                     echo '<input type="text" readonly="readonly" class="freeit_rewards_file_url_field" value="' . $value["value"] . '" placeholder="' . $value["label"] . '"/>';
-                                    echo '<input type="hidden" class="freeit_rewards_file_field" name="' . $value["id"] . '" value="' . $value["value"] . '"/>';
+                                    echo '<input type="hidden" class="freeit_rewards_file_field" name="' . $value["id"] . '" value="' . $raw_id . '"/>';
                                     echo '<button class="freeit-file-upload-btn shorter">' . __("Upload", "wp-crowdfunding") . '</button>';
                                     echo '</p>';
                                     break;
