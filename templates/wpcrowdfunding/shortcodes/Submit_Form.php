@@ -540,9 +540,13 @@ class Campaign_Submit_Form
                         $html .= '</div>';
                         $html .= '</div>';
 
-                        $html .= '<div class="wpneo-remove-button">';
-                        $html .= '<input name="remove_rewards" type="button" class="button tagadd removeCampaignRewards text-right" value="' . __('- Remove', 'wp-crowdfunding') . '" />';
-                        $html .= '</div>';
+                        // Show remove reward button only for new campaign form
+                        if (empty($edit_form)) {
+                            $html .= '<div class="wpneo-remove-button">';
+                            $html .= '<input name="remove_rewards" type="button" class="button tagadd removeCampaignRewards text-right" value="' . __('- Remove', 'wp-crowdfunding') . '" />';
+                            $html .= '</div>';
+                        }
+
 
                         $html .=  "</div>";
                         $html .=  "</div>";
@@ -649,10 +653,12 @@ class Campaign_Submit_Form
                 //$html .= apply_filters('wpcf_reward_fields_at_campaign_form', '');
 
 
+                if (empty($edit_form)) {
+                    $html .= '<div class="wpneo-remove-button">';
+                    $html .= '<input type="button" value="' . __("- Remove", "wp-crowdfunding") . '" class="button tagadd removeCampaignRewards" name="remove_rewards" style="display: none;">';
+                    $html .= '</div>';
+                }
 
-                $html .= '<div class="wpneo-remove-button">';
-                $html .= '<input type="button" value="' . __("- Remove", "wp-crowdfunding") . '" class="button tagadd removeCampaignRewards" name="remove_rewards" style="display: none;">';
-                $html .= '</div>';
 
                 $html .= '</div>';
 
