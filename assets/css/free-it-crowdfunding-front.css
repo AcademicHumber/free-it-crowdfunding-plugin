@@ -7,7 +7,7 @@
 .freeit-back-campaign-btn {
   background: #1adc68;
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   padding: 14px 25px;
   text-transform: capitalize;
   transition: 400ms;
@@ -15,6 +15,8 @@
   font-weight: 300;
   border-radius: 3px;
   border: none;
+  margin: 20px 0;
+  width: 250px;
 }
 
 /* Change default modal styles*/
@@ -34,4 +36,50 @@
   border: 1px solid #eeee;
   padding: 20px 0 10px;
   text-align: center;
+}
+
+/* Reorder campaign information fields*/
+
+.wpneo-campaign-summary .wpneo-campaign-summary-inner {
+  display: flex;
+  flex-direction: column;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .wpneo-campaign-title {
+  order: 1;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .wpneo-author-info {
+  order: 2;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .woocommerce {
+  order: 3;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .campaign-funding-info {
+  order: 4;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .wpneo-raised-percent {
+  order: 5;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .wpneo-raised-bar {
+  order: 6;
+  padding: 10px 0;
+  margin: 0;
+}
+.wpneo-campaign-summary
+  .wpneo-campaign-summary-inner
+  .minimum-funding-required {
+  order: 7;
+  margin: 5px 0;
+}
+.wpneo-campaign-summary
+  .wpneo-campaign-summary-inner
+  .freeit-back-campaign-btn {
+  order: 8;
+}
+.wpneo-campaign-summary .wpneo-campaign-summary-inner .wpneo-location-wrapper {
+  order: 9;
+}
+.wpneo-campaign-summary
+  .wpneo-campaign-summary-inner
+  .wpneo-campaign-creator-info-wrapper {
+  order: 10;
 }

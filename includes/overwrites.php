@@ -13,7 +13,7 @@ class Wp_Crowdfunding_OverWrites
         add_action('init',                                          array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
         add_action('init',                                          array($this, 'remove_default_order_ajax'));            // Remove WPCrowdfunding default show order ajax action
         add_action('wpcf_single_campaign_summary',                  array($this, 'back_campaign_btn'), 20);                // Add new back campaign button
-
+        add_action('wpcf_single_campaign_summary',                  array($this, 'show_minimum_fund_required_field'), 20); // Add minimum required percecntage to single campaign page
         // AJAX
 
         add_action('wp_ajax_free_it_donate_campaign',          array($this, 'campaign_donation_popup'));       // Generates the html for the campaign donation popup
@@ -458,7 +458,7 @@ class Wp_Crowdfunding_OverWrites
                     </td>
                     <td> </td>
                 </tr>
-<?php
+        <?php
             }
             $html .= ob_get_clean();
 
@@ -512,5 +512,32 @@ class Wp_Crowdfunding_OverWrites
             $html .= '</div>';
         }
         die(json_encode(array('success' => 1, 'message' => $html)));
+    }
+
+    public function show_minimum_fund_required_field()
+    {
+        global $post;
+        ?>
+        <div class="campaign-funding-info minimum-funding-required">
+            <ul>
+                <li>
+                    <?php
+                    $raised_percent = wpcf_function()->get_raised_percent();
+                    $minimum_percent = get_post_meta($post->ID, 'freeit-minimum-funding-required', true);
+                    if ($raised_percent < $minimum_percent) {
+                    ?>
+                        <p class="funding-amount"><?php echo $minimum_percent . '%'; ?></p>
+                        <span class="info-text"><?php _e('Minimum percent for start development', 'wp-crowdfunding'); ?></span>
+                    <?php
+                    } else {
+                    ?>
+                        <p class="funding-amount"><?php _e('Development Started', 'wp-crowdfunding'); ?></p>
+                    <?php
+                    }
+                    ?>
+                </li>
+            </ul>
+        </div>
+<?php
     }
 }
