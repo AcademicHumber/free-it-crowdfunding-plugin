@@ -35,6 +35,9 @@ class FreeIt_CrowdFunding
 
         // Add overwrites
         $this->include_overwrites();
+
+        // Include Add Ons
+        $this->include_add_ons();
     }
 
     public function setup_plugin()
@@ -81,6 +84,15 @@ class FreeIt_CrowdFunding
     {
         require_once FREE_IT_DIR_PATH . 'includes/overwrites.php';
         new \Free_It\Wp_Crowdfunding_OverWrites();
+    }
+
+    /**
+     * Includes all free it add ons
+     */
+    function include_add_ons()
+    {
+        require_once FREE_IT_DIR_PATH . 'includes/add-ons.php';
+        new \Free_It\FreeIT_Crowdfunding_AddOns();
     }
 
     /**
