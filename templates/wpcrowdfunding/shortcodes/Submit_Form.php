@@ -20,7 +20,7 @@ class Campaign_Submit_Form
         global $post, $wpdb;
 
         $html = '';
-        $title = $description = $short_description = $category = $tag = $image_url = $image_id = $video = $start_date = $end_date = $minimum_price = $maximum_price = $recommended_price = $pledge_amount = $funding_goal = $campaign_end_method = $type = $contributor_show = $paypal = $country =
+        $title = $description = $short_description = $category = $tag = $image_url = $image_id = $video = $start_date = $end_date = $minimum_price = $maximum_price = $recommended_price = $pledge_amount = $funding_goal = $minimum_funding_required = $campaign_end_method = $type = $contributor_show = $paypal = $country =
             $location = $edit_form = $edit_id = $checked = $checked2 = '';
 
         $reward = '';
@@ -64,23 +64,24 @@ class Campaign_Submit_Form
                                 $image_url          = $image_url[0];
                                 $image_id           = get_post_thumbnail_id(get_the_ID());
                             }
-                            $video              = get_post_meta(get_the_ID(), 'wpneo_funding_video', true);
-                            $start_date         = get_post_meta(get_the_ID(), '_nf_duration_start', true);
-                            $end_date           = get_post_meta(get_the_ID(), '_nf_duration_end', true);
-                            $minimum_price      = get_post_meta(get_the_ID(), 'wpneo_funding_minimum_price', true);
-                            $maximum_price      = get_post_meta(get_the_ID(), 'wpneo_funding_maximum_price', true);
-                            $recommended_price  = get_post_meta(get_the_ID(), 'wpneo_funding_recommended_price', true);
-                            $pledge_amount      = get_post_meta(get_the_ID(), 'wpcf_predefined_pledge_amount', true);
-                            $funding_goal       = get_post_meta(get_the_ID(), '_nf_funding_goal', true);
-                            $campaign_end_method = get_post_meta(get_the_ID(), 'wpneo_campaign_end_method', true);
-                            $type               = get_post_meta(get_the_ID(), 'wpneo_show_contributor_table', true);
-                            $contributor_show   = get_post_meta(get_the_ID(), 'wpneo_mark_contributors_as_anonymous', true);
-                            $paypal             = get_post_meta(get_the_ID(), 'wpneo_campaigner_paypal_id', true);
-                            $country            = get_post_meta(get_the_ID(), 'wpneo_country', true);
-                            $location           = get_post_meta(get_the_ID(), '_nf_location', true);
-                            $reward             = get_post_meta(get_the_ID(), 'wpneo_reward', true);
-                            $edit_form          = '<input type="hidden" name="edit_form" value="editform"/>';
-                            $edit_id            = '<input type="hidden" name="edit_post_id" value="' . $_GET["postid"] . '"/>';
+                            $video                      = get_post_meta(get_the_ID(), 'wpneo_funding_video', true);
+                            $start_date                 = get_post_meta(get_the_ID(), '_nf_duration_start', true);
+                            $end_date                   = get_post_meta(get_the_ID(), '_nf_duration_end', true);
+                            $minimum_price              = get_post_meta(get_the_ID(), 'wpneo_funding_minimum_price', true);
+                            $maximum_price              = get_post_meta(get_the_ID(), 'wpneo_funding_maximum_price', true);
+                            $recommended_price          = get_post_meta(get_the_ID(), 'wpneo_funding_recommended_price', true);
+                            $pledge_amount              = get_post_meta(get_the_ID(), 'wpcf_predefined_pledge_amount', true);
+                            $funding_goal               = get_post_meta(get_the_ID(), '_nf_funding_goal', true);
+                            $minimum_funding_required   = get_post_meta(get_the_ID(), '_freeit_minimum_funding_required', true);
+                            $campaign_end_method        = get_post_meta(get_the_ID(), 'wpneo_campaign_end_method', true);
+                            $type                       = get_post_meta(get_the_ID(), 'wpneo_show_contributor_table', true);
+                            $contributor_show           = get_post_meta(get_the_ID(), 'wpneo_mark_contributors_as_anonymous', true);
+                            $paypal                     = get_post_meta(get_the_ID(), 'wpneo_campaigner_paypal_id', true);
+                            $country                    = get_post_meta(get_the_ID(), 'wpneo_country', true);
+                            $location                   = get_post_meta(get_the_ID(), '_nf_location', true);
+                            $reward                     = get_post_meta(get_the_ID(), 'wpneo_reward', true);
+                            $edit_form                  = '<input type="hidden" name="edit_form" value="editform"/>';
+                            $edit_id                    = '<input type="hidden" name="edit_post_id" value="' . $_GET["postid"] . '"/>';
                         }
                     }
                 }
@@ -323,6 +324,19 @@ class Campaign_Submit_Form
             $html .= '</div>';
             $html .= '</div>';
         }
+
+
+
+        //Minimum funding to start development
+
+        $html .= '<div class="wpneo-single">';
+        $html .= '<div class="wpneo-name">' . __("Minimum funding percentage", "wp-crowdfunding") . '</div>';
+        $html .= '<div class="wpneo-fields">';
+        $html .= '<input type="number" name="freeit-minimum-funding-required" value="' . $minimum_funding_required . '">';
+        $html .= '<small>' . __("Minimum funding required to start development, once is reached, the money will be transfered", "wp-crowdfunding") . '</small>';
+        $html .= '</div>';
+        $html .= '</div>';
+
 
 
         //Recommended Amount

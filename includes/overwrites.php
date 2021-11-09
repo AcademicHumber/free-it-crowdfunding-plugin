@@ -7,12 +7,14 @@ class Wp_Crowdfunding_OverWrites
 
     function __construct()
     {
-        add_action('plugins_loaded',                    array($this, 'frontend_form_process'));                //Include all of resource to the plugin 
-        add_action('init',                              array($this, 'remove_default_rewards_tab'));           // Remove WPCrowdfunding default rewards tab on single product
-        add_action('init',                              array($this, 'remove_default_admin_rewards_tab'));     // Remove WPCrowdfunding default rewards tab on single product admin page
-        add_action('init',                              array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
-        add_action('init',                              array($this, 'remove_default_order_ajax'));            // Remove WPCrowdfunding default show order ajax action
-        add_action('wpcf_single_campaign_summary',      array($this, 'back_campaign_btn'), 20);                // Add new back campaign button
+        add_action('plugins_loaded',                                array($this, 'frontend_form_process'));                //Include all of resource to the plugin 
+        add_action('init',                                          array($this, 'remove_default_rewards_tab'));           // Remove WPCrowdfunding default rewards tab on single product
+        add_action('init',                                          array($this, 'remove_default_admin_rewards_tab'));     // Remove WPCrowdfunding default rewards tab on single product admin page
+        add_action('init',                                          array($this, 'remove_default_rewards_processing'));    // Remove WPCrowdfunding default rewards processing on campaign publish
+        add_action('init',                                          array($this, 'remove_default_order_ajax'));            // Remove WPCrowdfunding default show order ajax action
+        add_action('wpcf_single_campaign_summary',                  array($this, 'back_campaign_btn'), 20);                // Add new back campaign button
+        add_action('new_crowd_funding_campaign_option',             array($this, 'add_minimum_funding_field'));            // Adds minimum funding field on single campaign admin form
+        add_action('woocommerce_process_product_meta_crowdfunding', array($this, 'process_minimum_funding_required'));     // Process minimum required fund when campaign is published
 
         // AJAX
 
@@ -512,5 +514,31 @@ class Wp_Crowdfunding_OverWrites
             $html .= '</div>';
         }
         die(json_encode(array('success' => 1, 'message' => $html)));
+    }
+
+    /**
+     * Adds minimum funding field on single campaign admin form
+     */
+    public function add_minimum_funding_field()
+    {
+        // Location of this campaign
+        woocommerce_wp_text_input(
+            array(
+                'id'            => 'freeit-minimum-funding-required',
+                'label'         => __('Minimum funding required', 'wp-crowdfunding'),
+                'placeholder'   => __('Percentage', 'wp-crowdfunding'),
+                'description'   => __('The minimum funding percentage required to start development, once is reached, the money will be transfered to campaign owner', 'wp-crowdfunding'),
+                'type'          => 'text'
+            )
+        );
+    }
+
+    /**
+     * Process minimum funding required when the campaign is published
+     */
+    public function process_minimum_funding_required($post_id)
+    {
+        $minimim_funding = sanitize_text_field($_POST['freeit-minimum-funding-required']);
+        wpcf_function()->update_meta($post_id, 'freeit-minimum-funding-required', $minimim_funding);
     }
 }
