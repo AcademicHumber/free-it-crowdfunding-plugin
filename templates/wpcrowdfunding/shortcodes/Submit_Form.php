@@ -192,6 +192,40 @@ class Campaign_Submit_Form
             $html .= '</div>';
         }
 
+        //Country
+        if (get_option('wpcf_show_country') == 'true') {
+            $html .= '<div class="wpneo-single">';
+            $html .= '<div class="wpneo-name">' . __("Country", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="wpneo-fields">';
+            $countries_obj      = new \WC_Countries();
+            $countries          = $countries_obj->__get('countries');
+            array_unshift($countries, __('Select a country', 'wp-crowdfunding'));
+            $html .= '<select name="wpneo-form-country">';
+            foreach ($countries as $key => $value) {
+                if ($country == $key) {
+                    $html .= '<option selected="selected" value="' . $key . '">' . $value . '</option>';
+                } else {
+                    $html .= '<option value="' . $key . '">' . $value . '</option>';
+                }
+            }
+            $html .= '</select>';
+            $html .= '<small>' . __("Select your country", "wp-crowdfunding") . '</small>';
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+
+
+        //Location
+        if (get_option('wpcf_show_location') == 'true') {
+            $html .= '<div class="wpneo-single">';
+            $html .= '<div class="wpneo-name">' . __("City", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="wpneo-fields">';
+            $html .= '<input type="text" name="wpneo-form-location" value="' . $location . '" >';
+            $html .= '<small>' . __("Put the campaign location city here", "wp-crowdfunding") . '</small>';
+            $html .= '</div>';
+            $html .= '</div>';
+        }
+
 
         //Image
         if (get_option('wpcf_show_feature') == 'true') {
@@ -319,7 +353,7 @@ class Campaign_Submit_Form
             $html .= '<div class="wpneo-single">';
             $html .= '<div class="wpneo-name">' . __("Funding Goal", "wp-crowdfunding") . '</div>';
             $html .= '<div class="wpneo-fields">';
-            $html .= '<input type="number" name="wpneo-form-funding-goal" value="' . $funding_goal . '">';
+            $html .= '<input type="number" name="wpneo-form-funding-goal" value="' . $funding_goal . '" max="250000" min="1">';
             $html .= '<small>' . __("Campaign funding goal", "wp-crowdfunding") . '</small>';
             $html .= '</div>';
             $html .= '</div>';
@@ -330,9 +364,9 @@ class Campaign_Submit_Form
         //Minimum funding to start development
 
         $html .= '<div class="wpneo-single">';
-        $html .= '<div class="wpneo-name">' . __("Minimum funding percentage", "wp-crowdfunding") . '</div>';
+        $html .= '<div class="wpneo-name">' . __("Minimum funding percentage (0 to 100)", "wp-crowdfunding") . '</div>';
         $html .= '<div class="wpneo-fields">';
-        $html .= '<input type="number" name="freeit-minimum-funding-required" value="' . $minimum_funding_required . '">';
+        $html .= '<input type="number" name="freeit-minimum-funding-required" value="' . $minimum_funding_required . '" max="100" min="1" maxlength="3">';
         $html .= '<small>' . __("Minimum funding required to start development, once is reached, the money will be transfered", "wp-crowdfunding") . '</small>';
         $html .= '</div>';
         $html .= '</div>';
@@ -343,11 +377,13 @@ class Campaign_Submit_Form
         $_recomended_price = get_option('wpneo_show_recommended_price');
         $_predefined_amount = get_option('wpcf_show_predefined_amount');
         if ($_recomended_price == 'true') {
+            $html .= '<div class="wpneo-reward-option">' . __("Suggested donation pledges", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="section-description"><small>' . __("Suggested donation description", "wp-crowdfunding") . '</small></div>';
             $html .= '<div class="wpneo-single ' . ($_predefined_amount == 'true' ? 'wpneo-first-half' : '') . '">';
-            $html .= '<div class="wpneo-name">' . __("Recommended Amount", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="wpneo-name">' . __("Default donation pledge", "wp-crowdfunding") . '</div>';
             $html .= '<div class="wpneo-fields">';
             $html .= '<input type="number" name="wpneo-form-recommended-price" value="' . $recommended_price . '">';
-            $html .= '<small>' . __("Recommended campaign funding amount", "wp-crowdfunding") . '</small>';
+            $html .= '<small>' . __("This is the default donation pledge that will show up when a user wants to  donate your campaign", "wp-crowdfunding") . '</small>';
             $html .= '</div>';
             $html .= '</div>';
         }
@@ -356,10 +392,10 @@ class Campaign_Submit_Form
         //Predefined Pledge Amount
         if ($_predefined_amount == 'true') {
             $html .= '<div class="wpneo-single ' . ($_recomended_price == 'true' ? 'wpneo-second-half' : '') . '">';
-            $html .= '<div class="wpneo-name">' . __("Predefined Pledge Amount", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="wpneo-name">' . __("Additional donation pledges", "wp-crowdfunding") . '</div>';
             $html .= '<div class="wpneo-fields">';
             $html .= '<input type="text" name="wpcf_predefined_pledge_amount" value="' . $pledge_amount . '">';
-            $html .= '<small>' . __("Predefined amount allow you to place the amount in donate box by click, price should separated by comma (,), example: <code>10,20,30,40</code>", "wp-crowdfunding") . '</small>';
+            $html .= '<small>' . __("Other suggested donation pledges, in addition to the default pledge. Price should separated by comma (,), example: <code>10,20,30,40</code>", "wp-crowdfunding") . '</small>';
             $html .= '</div>';
             $html .= '</div>';
         }
@@ -389,40 +425,6 @@ class Campaign_Submit_Form
             $html .= '</div>';
         }
 
-        //Country
-        if (get_option('wpcf_show_country') == 'true') {
-            $html .= '<div class="wpneo-single">';
-            $html .= '<div class="wpneo-name">' . __("Country", "wp-crowdfunding") . '</div>';
-            $html .= '<div class="wpneo-fields">';
-            $countries_obj      = new \WC_Countries();
-            $countries          = $countries_obj->__get('countries');
-            array_unshift($countries, __('Select a country', 'wp-crowdfunding'));
-            $html .= '<select name="wpneo-form-country">';
-            foreach ($countries as $key => $value) {
-                if ($country == $key) {
-                    $html .= '<option selected="selected" value="' . $key . '">' . $value . '</option>';
-                } else {
-                    $html .= '<option value="' . $key . '">' . $value . '</option>';
-                }
-            }
-            $html .= '</select>';
-            $html .= '<small>' . __("Select your country", "wp-crowdfunding") . '</small>';
-            $html .= '</div>';
-            $html .= '</div>';
-        }
-
-
-        //Location
-        if (get_option('wpcf_show_location') == 'true') {
-            $html .= '<div class="wpneo-single">';
-            $html .= '<div class="wpneo-name">' . __("Location", "wp-crowdfunding") . '</div>';
-            $html .= '<div class="wpneo-fields">';
-            $html .= '<input type="text" name="wpneo-form-location" value="' . $location . '" >';
-            $html .= '<small>' . __("Put the campaign location here", "wp-crowdfunding") . '</small>';
-            $html .= '</div>';
-            $html .= '</div>';
-        }
-
 
         // Clone Field
         //$reward = stripslashes($reward);
@@ -430,6 +432,7 @@ class Campaign_Submit_Form
             $reward_data_array = json_decode($reward, true);
             $meta_count = is_array($reward_data_array) ? count($reward_data_array) : 0;
             $html .= '<div class="wpneo-reward-option">' . __("Reward Option", "wp-crowdfunding") . '</div>';
+            $html .= '<div class="section-description"><small>' . __("Reward options description", "wp-crowdfunding") . '</small></div>';
             $html .= '<div class="panel" id="reward_options">';
 
             $month_list = array(

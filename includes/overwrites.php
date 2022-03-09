@@ -527,7 +527,7 @@ class Wp_Crowdfunding_OverWrites
                     if ($raised_percent < $minimum_percent) {
                     ?>
                         <p class="funding-amount"><?php echo $minimum_percent . '%'; ?></p>
-                        <span class="info-text"><?php _e('Minimum percent for start development', 'wp-crowdfunding'); ?></span>
+                        <span class="info-text"><?php _e('Minimum percent to start development', 'wp-crowdfunding'); ?></span>
                     <?php
                     } else {
                     ?>

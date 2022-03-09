@@ -83,3 +83,12 @@
   .wpneo-campaign-creator-info-wrapper {
   order: 10;
 }
+
+#wpneofrontenddata .wpneo-reward-option {
+  clear: both;
+  margin-bottom: 5px;
+}
+
+.section-description {
+  margin-bottom: 15px;
+}

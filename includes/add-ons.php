@@ -2,6 +2,10 @@
 
 namespace Free_It;
 
+if (!defined('ABSPATH')) {
+    exit;
+}
+
 class FreeIT_Crowdfunding_AddOns
 {
     function __construct()
@@ -19,11 +23,12 @@ class FreeIT_Crowdfunding_AddOns
         // Location of this campaign
         woocommerce_wp_text_input(
             array(
-                'id'            => 'freeit-minimum-funding-required',
-                'label'         => __('Minimum funding required', 'wp-crowdfunding'),
-                'placeholder'   => __('Percentage', 'wp-crowdfunding'),
-                'description'   => __('The minimum funding percentage required to start development, once is reached, the money will be transfered to campaign owner', 'wp-crowdfunding'),
-                'type'          => 'text'
+                'id'                => 'freeit-minimum-funding-required',
+                'label'             => __('Minimum funding required', 'wp-crowdfunding'),
+                'placeholder'       => __('Percentage', 'wp-crowdfunding'),
+                'description'       => __('The minimum funding percentage required to start development, once is reached, the money will be transfered to campaign owner', 'wp-crowdfunding'),
+                'type'              => 'number',
+                'custom_attributes' => array('max' => 100, 'min' => 1, 'maxlength' => 3)
             )
         );
     }
